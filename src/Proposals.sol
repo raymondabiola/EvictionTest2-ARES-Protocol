@@ -145,7 +145,7 @@ contract Proposals is AccessControl, ReentrancyGuard{
         require(!targetProp.isExecuted, "proposal already executed");
         require(block.timestamp >= targetProp.executionTime);
         targetProp.isExecuted = true;
-        aresTreasury.transferOutOfTreasury(targetProp.erc20Address, targetProp.recipient, targetProp.amount);
+        aresTreasury.transferOutOfTreasury(targetProp.recipient, targetProp.erc20Address, targetProp.amount);
         emit ProposalExecuted(_proposalId, msg.sender);
     }
 
