@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.30;
 import {AccessControl} from "lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
 
 contract TimeLock is AccessControl{
-
-bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
 
 uint256 public proposalReviewTimeLock = 24 hours;
 uint256 public approveEndDuration = 12 hours;
@@ -15,17 +13,22 @@ uint256 public approveEndDuration = 12 hours;
 //     return timelockDuration;
 //  }
 
- function setexecutionTimeLockDuration(uint _duration) external onlyRole(DAO_ROLE){
-    executionTimelockDuration = _duration;
+constructor(){
+    _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+}
+ function setExecutionTimeLockDuration(uint _durationInHours) external onlyRole(DEFAULT_ADMIN_ROLE){
+    require(_durationInHours >= 1, "Duration is too short");
+    executionTimelockDuration = _durationInHours * 1 hours;
  }
 
- function setProposalReviewTimeLock(uint _duration) external onlyRole(DAO_ROLE){
-    proposalReviewTimeLock = _duration;
+ function setProposalReviewTimeLock(uint _durationInHours) external onlyRole(DEFAULT_ADMIN_ROLE){
+    require(_durationInHours >= 1, "Duration is too short");
+    proposalReviewTimeLock = _durationInHours * 1 hours;
  }
 
- function setApproveEndDuration(uint _duration) external onlyRole(DAO_ROLE){
-    approveEndDuration = _duration;
+ function setApproveEndDuration(uint _durationInHours) external onlyRole(DEFAULT_ADMIN_ROLE){
+    require(_durationInHours >= 1, "Duration is too short");
+    approveEndDuration = _durationInHours * 1 hours;
  }
-
 
 }

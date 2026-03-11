@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.30;
 import {AccessControl} from "lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
 import {IERC20} from "../src/interfaces/IERC20.sol";
 import {IARESTreasury} from "../src/interfaces/IARESTreasury.sol";
@@ -38,7 +38,7 @@ contract Proposals is AccessControl, ReentrancyGuard{
     }
 
     mapping(uint => Proposal) public proposals;
-    mapping(address => mapping(uint => bool)) hasVoted;
+    mapping(address => mapping(uint => bool)) hasSigned;
 
     uint256 public threshold;
 
@@ -67,7 +67,13 @@ contract Proposals is AccessControl, ReentrancyGuard{
         refundableProposalCreateFee = _propFee;
     }
 
+    function setAERSContractAddr(address _aresAddr) external onlyRole(DEFAULT_ADMIN_ROLE){
+        require(_aresAddr != address(0), "Invalid Address");
+        aresTreasury = IARESTreasury(_aresAddr);
+    }
+
     function setRefundableProposalFee(uint _propFee) external onlyRole(SIGNERS_ROLE) {
+        require(_propFee > 0, "invalid amount");
         refundableProposalCreateFee = _propFee;
     }
 
@@ -91,6 +97,7 @@ contract Proposals is AccessControl, ReentrancyGuard{
         });
 
         bytes32 proposalHash = signatureVerification.hashProposal(
+        address(this),
         proposalId,
         _name,
         _erc20Address,
@@ -120,8 +127,8 @@ contract Proposals is AccessControl, ReentrancyGuard{
             address signer = signatureVerification.recoverAddressFromSignatureAndMessage(proposalHash, signatures[i]);
             require(signer != address(0), "Invalid signature");
             require(hasRole(SIGNERS_ROLE, signer), "Invalid signer");
-            require(!hasVoted[signer][_proposalId], "Signer already approved proposal");
-            hasVoted[signer][_proposalId] = true;
+            require(!hasSigned[signer][_proposalId], "Signer already approved proposal");
+            hasSigned[signer][_proposalId] = true;
             targetProp.signatureConfirmations += 1;
         }
 
@@ -147,7 +154,7 @@ contract Proposals is AccessControl, ReentrancyGuard{
             if(targetProp.cancellationTime >= targetProp.approveStartTime){
             (bool success, ) = payable(proposalAddress[_proposalId]).call{value: proposerFeeBalances[proposalAddress[_proposalId]][_proposalId]}("");
             require(success, "transfer failed");
-        }
+        } else revert("fee is not refundable");
     }
 
     function cancelProposal(uint _proposalId) external {

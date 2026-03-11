@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.30;
 import {IERC20} from "../src/interfaces/IERC20.sol";
 import {AccessControl} from "lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
 import {ReentrancyGuard} from "lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
@@ -20,11 +20,14 @@ contract AresTreasury is AccessControl, ReentrancyGuard{
     event TreasuryTransferred(address indexed to, address indexed erc20Address, uint amount);
 
     constructor(address _proposalContract){
+        require(_proposalContract != address(0), "Invalid Address");
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(PROPOSAL_CONTRACT_ROLE, _proposalContract);
     }
 
     function fundTreasury(string memory _name, uint _amount, address _erc20Address) public  nonReentrant{
+        require(_amount > 0 , "Invalid Amount");
+        require(_erc20Address != address(0));
         IERC20 token = IERC20(_erc20Address);
         token.transferFrom(msg.sender, address(this), _amount);
         contributors[msg.sender].name = _name; 
